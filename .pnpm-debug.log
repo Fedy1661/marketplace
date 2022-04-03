@@ -1,0 +1,52 @@
+{
+  "0 debug pnpm:scope": {
+    "selected": 1
+  },
+  "1 debug pnpm:package-manifest": {
+    "initial": {
+      "name": "marketplace",
+      "version": "1.0.0",
+      "description": "",
+      "main": "index.js",
+      "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+      },
+      "keywords": [],
+      "author": "",
+      "license": "ISC"
+    },
+    "prefix": "D:\\Ethereum\\marketplace"
+  },
+  "2 debug pnpm:context": {
+    "currentLockfileExists": false,
+    "storeDir": "D:\\.pnpm-store\\v3",
+    "virtualStoreDir": "D:\\Ethereum\\marketplace\\node_modules\\.pnpm"
+  },
+  "3 debug pnpm:stage": {
+    "prefix": "D:\\Ethereum\\marketplace",
+    "stage": "resolution_started"
+  },
+  "4 debug pnpm:_dependency_resolved": {
+    "resolution": "registry.npmjs.org/hardhat-gas-reporter/1.0.8",
+    "wanted": {
+      "dependentId": ".",
+      "name": "hardhat-gas-reporter",
+      "rawSpec": "^1.0.4"
+    }
+  },
+  "5 debug pnpm:progress": {
+    "packageId": "registry.npmjs.org/hardhat-gas-reporter/1.0.8",
+    "requester": "D:\\Ethereum\\marketplace",
+    "status": "resolved"
+  },
+  "6 error pnpm": {
+    "code": "ERR_PNPM_SPEC_NOT_SUPPORTED_BY_ANY_RESOLVER",
+    "pkgsStack": [],
+    "err": {
+      "name": "pnpm",
+      "message": "pretti\ner@^2.3.2 isn't supported by any available resolver.",
+      "code": "ERR_PNPM_SPEC_NOT_SUPPORTED_BY_ANY_RESOLVER",
+      "stack": "pnpm: pretti\ner@^2.3.2 isn't supported by any available resolver.\n    at Object.resolve (C:\\Users\\rubuk\\AppData\\Roaming\\nvm\\v14.19.0\\node_modules\\pnpm\\dist\\pnpm.cjs:86119:17)\n    at processTicksAndRejections (internal/process/task_queues.js:95:5)\n    at async run (C:\\Users\\rubuk\\AppData\\Roaming\\nvm\\v14.19.0\\node_modules\\pnpm\\dist\\pnpm.cjs:74193:23)"
+    }
+  }
+}
