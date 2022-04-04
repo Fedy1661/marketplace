@@ -16,9 +16,10 @@ contract MyToken is ERC721, Ownable {
         return "https://ipfs.io/ipfs/QmWJqAJA7VPzMYCZ1ZF7mfHT9qLY5CQZboB83nLMm4zY7A?filename=BoredApe.json";
     }
 
-    function mint(address to) public onlyOwner {
+    function mint(address to) public onlyOwner returns(uint256) {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _mint(to, tokenId);
+        return tokenId;
     }
 }
