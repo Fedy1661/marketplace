@@ -12,6 +12,7 @@ describe("Staking Contract", function () {
   let clean: string;
 
   const DURATION = 60 * 60 * 24 * 3;
+  const value = 100;
 
   before(async () => {
     const Marketplace = await ethers.getContractFactory("Marketplace");
@@ -80,7 +81,7 @@ describe("Staking Contract", function () {
       await marketplace.createItem();
       await marketplace.listItemOnAuction(0);
 
-      await marketplace.makeBid(0, { value: 100 });
+      await marketplace.makeBid(0, { value });
 
       await network.provider.send("evm_increaseTime", [DURATION]);
       await network.provider.send("evm_mine");
@@ -214,7 +215,7 @@ describe("Staking Contract", function () {
       it("should throw error if item is not at auction", async () => {
         await marketplace.createItem();
 
-        const tx = marketplace.makeBid(0, { value: 10 });
+        const tx = marketplace.makeBid(0, { value });
         const reason = "Auction is not active";
         await expect(tx).to.be.revertedWith(reason);
       });
@@ -222,14 +223,14 @@ describe("Staking Contract", function () {
         await marketplace.createItem();
         await marketplace.listItemOnAuction(0);
 
-        await marketplace.makeBid(0, { value: 100 });
+        await marketplace.makeBid(0, { value });
 
         await network.provider.send("evm_increaseTime", [DURATION]);
         await network.provider.send("evm_mine");
 
         await marketplace.finishAuction(0);
 
-        const tx = marketplace.makeBid(0, { value: 10 });
+        const tx = marketplace.makeBid(0, { value });
         const reason = "Auction is not active";
         await expect(tx).to.be.revertedWith(reason);
       });
@@ -237,14 +238,14 @@ describe("Staking Contract", function () {
         await marketplace.createItem();
         await marketplace.listItemOnAuction(0);
 
-        await marketplace.makeBid(0, { value: 100 });
+        await marketplace.makeBid(0, { value });
 
         await network.provider.send("evm_increaseTime", [DURATION]);
         await network.provider.send("evm_mine");
 
         await marketplace.cancelAuction(0);
 
-        const tx = marketplace.makeBid(0, { value: 10 });
+        const tx = marketplace.makeBid(0, { value });
         const reason = "Auction is not active";
         await expect(tx).to.be.revertedWith(reason);
       });
@@ -252,7 +253,7 @@ describe("Staking Contract", function () {
     describe("finishAuction", () => {
       it("should throw error if item was sold", async () => {
         await marketplace.createItem();
-        await marketplace.listItem(0, 10);
+        await marketplace.listItem(0, value);
       });
       it("should throw error if auction was stopped", async () => {
         await marketplace.createItem();
@@ -289,7 +290,7 @@ describe("Staking Contract", function () {
         await marketplace.createItem();
         await marketplace.listItemOnAuction(0);
 
-        await marketplace.makeBid(0, { value: 100 });
+        await marketplace.makeBid(0, { value });
 
         await network.provider.send("evm_increaseTime", [DURATION]);
         await network.provider.send("evm_mine");
@@ -303,9 +304,9 @@ describe("Staking Contract", function () {
         await marketplace.createItem();
         await marketplace.listItemOnAuction(0);
 
-        await marketplace.makeBid(0, { value: 100 });
-        await marketplace.makeBid(0, { value: 100 });
-        await marketplace.connect(addr1).makeBid(0, { value: 150 });
+        await marketplace.makeBid(0, { value });
+        await marketplace.makeBid(0, { value });
+        await marketplace.connect(addr1).makeBid(0, { value: value * 1.5 });
 
         await network.provider.send("evm_increaseTime", [DURATION]);
         await network.provider.send("evm_mine");
@@ -319,8 +320,8 @@ describe("Staking Contract", function () {
         await marketplace.createItem();
         await marketplace.listItemOnAuction(0);
 
-        await marketplace.connect(addr1).makeBid(0, { value: 100 });
-        await marketplace.makeBid(0, { value: 100 });
+        await marketplace.connect(addr1).makeBid(0, { value });
+        await marketplace.makeBid(0, { value });
 
         await network.provider.send("evm_increaseTime", [DURATION]);
         await network.provider.send("evm_mine");
@@ -330,22 +331,50 @@ describe("Staking Contract", function () {
         const ownerAddress = await marketplace.ownerOf(0);
         expect(ownerAddress).to.be.equal(addr1.address);
       });
-      it("the creator of auction should get the bid of the winner", async () => {});
-      it("losers should get their bets back", async () => {
+      it("the creator of auction should get the bid of the winner", async () => {
         await marketplace.createItem();
         await marketplace.listItemOnAuction(0);
 
-        await marketplace.connect(addr1).makeBid(0, { value: 100 });
-        await marketplace.makeBid(0, { value: 70 });
+        await marketplace.connect(addr1).makeBid(0, { value });
 
         await network.provider.send("evm_increaseTime", [DURATION]);
         await network.provider.send("evm_mine");
 
-        await marketplace.finishAuction(0);
-        const marketplaceBalance = await marketplace.provider.getBalance(
-          marketplace.address
+        const startBalance = await owner.getBalance();
+
+        const tx = await marketplace.finishAuction(0);
+        const { effectiveGasPrice, cumulativeGasUsed } = await tx.wait();
+
+        const finalBalance = await owner.getBalance();
+        const transactionFee = effectiveGasPrice.mul(cumulativeGasUsed);
+
+        expect(finalBalance.add(transactionFee).sub(startBalance)).to.be.eq(
+          value
         );
-        expect(marketplaceBalance).to.be.equal(0);
+      });
+      it("losers should get their bets back", async () => {
+        const customValue = value / 2;
+        const startBalance = await addr1.getBalance();
+
+        await marketplace.createItem();
+        await marketplace.listItemOnAuction(0);
+
+        await marketplace.makeBid(0, { value });
+        const tx = await marketplace
+          .connect(addr1)
+          .makeBid(0, { value: customValue });
+        const { cumulativeGasUsed, effectiveGasPrice } = await tx.wait();
+        const transactionFee = effectiveGasPrice.mul(cumulativeGasUsed);
+
+        await network.provider.send("evm_increaseTime", [DURATION]);
+        await network.provider.send("evm_mine");
+
+        const tx2 = await marketplace.finishAuction(0);
+        await tx2.wait();
+
+        const finalBalance = await addr1.getBalance();
+
+        expect(finalBalance.add(transactionFee)).to.be.eq(startBalance);
       });
     });
     describe("cancelAuction", () => {
