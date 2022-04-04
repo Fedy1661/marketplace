@@ -60,7 +60,7 @@ contract Marketplace is MyToken {
 
         _transfer(address(this), msg.sender, _tokenId);
 
-        item.selling = false;
+        delete item.selling;
         item.sold = true;
         item.price = msg.value;
 
@@ -71,7 +71,7 @@ contract Marketplace is MyToken {
         Item storage item = items[_tokenId];
         require(item.selling, 'Item is not selling');
 
-        item.selling = false;
+        delete item.selling;
 
         emit UnlistItem(_tokenId);
     }
@@ -79,7 +79,7 @@ contract Marketplace is MyToken {
     function listItemOnAuction(uint256 _tokenId) public onlyOwner {
         require(ownerOf(_tokenId) == address(this), 'Token was sold');
         Auction storage auction = auctions[_tokenId];
-        require(auction.active == false, 'Auction is active');
+        require(!auction.active, 'Auction is active');
 
         uint256 finishAt = block.timestamp + DURATION;
         auction.active = true;
