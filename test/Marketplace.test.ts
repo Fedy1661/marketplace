@@ -44,8 +44,6 @@ describe("Staking Contract", function () {
     });
   });
   describe("listItem", () => {
-    // listItem -> transfer -> buyItem
-    // should throw error if item was transmitted
     it("should throw error when call by user", async () => {
       await marketplace.createItem();
       const tx = marketplace.connect(addr1).listItem(0, 10);
