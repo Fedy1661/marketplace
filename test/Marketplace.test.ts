@@ -201,7 +201,56 @@ describe("Staking Contract", function () {
         await expect(tx).to.be.revertedWith(reason);
       });
     });
-    describe("makeBig", () => {});
+    describe("makeBid", () => {
+      it("should throw error if value equals 0", async () => {
+        await marketplace.createItem();
+        const tx = marketplace.makeBid(0, { value: 0 });
+        const reason = "Value should be positive";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+      it("should throw error if item doesn't exist", async () => {
+        const tx = marketplace.makeBid(0, { value: 10 });
+        const reason = "Auction is not active";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+      it("should throw error if item is not at auction", async () => {
+        await marketplace.createItem();
+
+        const tx = marketplace.makeBid(0, { value: 10 });
+        const reason = "Auction is not active";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+      it("should throw error if auction was ended", async () => {
+        await marketplace.createItem();
+        await marketplace.listItemOnAuction(0);
+
+        await marketplace.makeBid(0, { value: 100 });
+
+        await network.provider.send("evm_increaseTime", [DURATION]);
+        await network.provider.send("evm_mine");
+
+        await marketplace.finishAuction(0);
+
+        const tx = marketplace.makeBid(0, { value: 10 });
+        const reason = "Auction is not active";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+      it("should throw error if auction was canceled", async () => {
+        await marketplace.createItem();
+        await marketplace.listItemOnAuction(0);
+
+        await marketplace.makeBid(0, { value: 100 });
+
+        await network.provider.send("evm_increaseTime", [DURATION]);
+        await network.provider.send("evm_mine");
+
+        await marketplace.cancelAuction(0);
+
+        const tx = marketplace.makeBid(0, { value: 10 });
+        const reason = "Auction is not active";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+    });
     describe("finishAuction", () => {
       it("should throw error if item was sold", async () => {
         await marketplace.createItem();
@@ -300,6 +349,132 @@ describe("Staking Contract", function () {
         );
         expect(marketplaceBalance).to.be.equal(0);
       });
+    });
+    describe("cancelAuction", () => {
+      it("should throw error when canceling twice", async () => {
+        await marketplace.createItem();
+        await marketplace.listItemOnAuction(0);
+
+        await network.provider.send("evm_increaseTime", [DURATION]);
+        await network.provider.send("evm_mine");
+
+        await marketplace.cancelAuction(0);
+
+        const tx = marketplace.cancelAuction(0);
+        const reason = "Auction was stopped";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+      it("should throw error if 3 days have not passed", async () => {
+        await marketplace.createItem();
+        await marketplace.listItemOnAuction(0);
+
+        const tx = marketplace.cancelAuction(0);
+        const reason = "Auction is still active";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+      it("should throw error if item doesn't exist", async () => {
+        const tx = marketplace.cancelAuction(0);
+        const reason = "Auction was stopped";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+      it("should cancel the auction", async () => {
+        await marketplace.createItem();
+        await marketplace.listItemOnAuction(0);
+
+        await network.provider.send("evm_increaseTime", [DURATION]);
+        await network.provider.send("evm_mine");
+
+        await marketplace.cancelAuction(0);
+
+        const tx = marketplace.finishAuction(0);
+        const reason = "Auction was stopped";
+        await expect(tx).to.be.revertedWith(reason);
+      });
+    });
+  });
+
+  describe("Events", () => {
+    it("should emit CreateItem event", async () => {
+      const tx = marketplace.createItem();
+      await expect(tx).to.be.emit(marketplace, "CreateItem").withArgs(0);
+    });
+    it("should emit ListItem event", async () => {
+      await marketplace.createItem();
+      const tx = marketplace.listItem(0, 10);
+      await expect(tx).to.be.emit(marketplace, "ListItem").withArgs(0, 10);
+    });
+    it("should emit BuyItem event", async () => {
+      await marketplace.createItem();
+      await marketplace.listItem(0, 10);
+      const tx = marketplace.connect(addr1).buyItem(0, { value: 10 });
+      await expect(tx)
+        .to.be.emit(marketplace, "BuyItem")
+        .withArgs(0, addr1.address, 10);
+    });
+    it("should emit UnlistItem event", async () => {
+      await marketplace.createItem();
+      await marketplace.listItem(0, 10);
+      const tx = marketplace.cancel(0);
+      await expect(tx).to.be.emit(marketplace, "UnlistItem").withArgs(0);
+    });
+
+    it("should emit ListItemOnAuction event", async () => {
+      await marketplace.createItem();
+
+      const tx = await marketplace.listItemOnAuction(0);
+
+      const { blockNumber } = await tx.wait();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const timestamp = block.timestamp;
+
+      await expect(tx)
+        .to.be.emit(marketplace, "ListItemOnAuction")
+        .withArgs(0, timestamp, timestamp + DURATION);
+    });
+    it("should emit MakeBid event", async () => {
+      await marketplace.createItem();
+      await marketplace.listItemOnAuction(0);
+
+      const tx = marketplace.connect(addr1).makeBid(0, { value: 10 });
+      await expect(tx)
+        .to.be.emit(marketplace, "MakeBid")
+        .withArgs(0, addr1.address, 10);
+    });
+    it("should emit FinishAuction event", async () => {
+      await marketplace.createItem();
+      await marketplace.listItemOnAuction(0);
+
+      await marketplace.connect(addr1).makeBid(0, { value: 10 });
+
+      await network.provider.send("evm_increaseTime", [DURATION]);
+      await network.provider.send("evm_mine");
+
+      const tx = marketplace.finishAuction(0);
+      await expect(tx)
+        .to.be.emit(marketplace, "FinishAuction")
+        .withArgs(0, addr1.address, 10);
+    });
+    it("should emit FinishAuction event without bidders", async () => {
+      await marketplace.createItem();
+      await marketplace.listItemOnAuction(0);
+
+      await network.provider.send("evm_increaseTime", [DURATION]);
+      await network.provider.send("evm_mine");
+
+      const tx = marketplace.finishAuction(0);
+      await expect(tx)
+        .to.be.emit(marketplace, "FinishAuction")
+        .withArgs(0, marketplace.address, 0);
+    });
+    it("should emit CancelAuction event", async () => {
+      await marketplace.createItem();
+      await marketplace.listItemOnAuction(0);
+
+      await network.provider.send("evm_increaseTime", [DURATION]);
+      await network.provider.send("evm_mine");
+
+      const tx = await marketplace.cancelAuction(0);
+      await expect(tx).to.be.emit(marketplace, "CancelAuction").withArgs(0);
     });
   });
 });
