@@ -72,11 +72,6 @@ describe("Staking Contract", function () {
       const reason = "Item is selling";
       await expect(tx).to.be.revertedWith(reason);
     });
-    it("should throw error if item doesn't exist", async () => {
-      const tx = marketplace.listItem(0, 10);
-      const reason = "ERC721: owner query for nonexistent token";
-      await expect(tx).to.be.revertedWith(reason);
-    });
     it("should throw error if list item after auction", async () => {
       await marketplace.createItem();
       await marketplace.listItemOnAuction(0);
@@ -111,11 +106,6 @@ describe("Staking Contract", function () {
       const reason = "Item is not selling";
       await expect(tx).to.be.revertedWith(reason);
     });
-    it("should throw error if item doesn't exist", async () => {
-      const tx = marketplace.buyItem(0);
-      const reason = "Item is not selling";
-      await expect(tx).to.be.revertedWith(reason);
-    });
     it("should throw error if value lower than price", async () => {
       await marketplace.createItem();
       await marketplace.listItem(0, 10);
@@ -143,11 +133,6 @@ describe("Staking Contract", function () {
       const reason = "Item is not selling";
       await expect(tx).to.be.revertedWith(reason);
     });
-    it("should throw error if item doesn't exist", async () => {
-      const tx = marketplace.cancel(0);
-      const reason = "Item is not selling";
-      await expect(tx).to.be.revertedWith(reason);
-    });
     it("should throw error when call by user", async () => {
       await marketplace.createItem();
       await marketplace.listItem(0, 10);
@@ -168,11 +153,6 @@ describe("Staking Contract", function () {
 
   describe("Auction", () => {
     describe("listItemOnAuction", () => {
-      it("should throw error if item doesn't exist", async () => {
-        const tx = marketplace.listItemOnAuction(0);
-        const reason = "ERC721: owner query for nonexistent token";
-        await expect(tx).to.be.revertedWith(reason);
-      });
       it("should throw error if item was sold", async () => {
         await marketplace.createItem();
         await marketplace.listItem(0, 10);
@@ -205,11 +185,6 @@ describe("Staking Contract", function () {
         await marketplace.createItem();
         const tx = marketplace.makeBid(0, { value: 0 });
         const reason = "Value should be positive";
-        await expect(tx).to.be.revertedWith(reason);
-      });
-      it("should throw error if item doesn't exist", async () => {
-        const tx = marketplace.makeBid(0, { value: 10 });
-        const reason = "Auction is not active";
         await expect(tx).to.be.revertedWith(reason);
       });
       it("should throw error if item is not at auction", async () => {
@@ -277,11 +252,6 @@ describe("Staking Contract", function () {
       });
       it("should throw error if auction didn't start", async () => {
         await marketplace.createItem();
-        const tx = marketplace.finishAuction(0);
-        const reason = "Auction was stopped";
-        await expect(tx).to.be.revertedWith(reason);
-      });
-      it("should throw error if item doesn't exist", async () => {
         const tx = marketplace.finishAuction(0);
         const reason = "Auction was stopped";
         await expect(tx).to.be.revertedWith(reason);
@@ -399,11 +369,6 @@ describe("Staking Contract", function () {
         const reason = "Auction is still active";
         await expect(tx).to.be.revertedWith(reason);
       });
-      it("should throw error if item doesn't exist", async () => {
-        const tx = marketplace.cancelAuction(0);
-        const reason = "Auction was stopped";
-        await expect(tx).to.be.revertedWith(reason);
-      });
       it("should cancel the auction", async () => {
         await marketplace.createItem();
         await marketplace.listItemOnAuction(0);
@@ -502,6 +467,45 @@ describe("Staking Contract", function () {
 
       const tx = await marketplace.cancelAuction(0);
       await expect(tx).to.be.emit(marketplace, "CancelAuction").withArgs(0);
+    });
+  });
+
+  describe("Errors", () => {
+    it("listItem should throw error if item doesn't exist", async () => {
+      const tx = marketplace.listItem(0, 10);
+      const reason = "ERC721: owner query for nonexistent token";
+      await expect(tx).to.be.revertedWith(reason);
+    });
+    it("buyItem should throw error if item doesn't exist", async () => {
+      const tx = marketplace.buyItem(0);
+      const reason = "Item is not selling";
+      await expect(tx).to.be.revertedWith(reason);
+    });
+    it("cancel should throw error if item doesn't exist", async () => {
+      const tx = marketplace.cancel(0);
+      const reason = "Item is not selling";
+      await expect(tx).to.be.revertedWith(reason);
+    });
+
+    it("listItemOnAuction should throw error if item doesn't exist", async () => {
+      const tx = marketplace.listItemOnAuction(0);
+      const reason = "ERC721: owner query for nonexistent token";
+      await expect(tx).to.be.revertedWith(reason);
+    });
+    it("makeBid should throw error if item doesn't exist", async () => {
+      const tx = marketplace.makeBid(0, { value: 10 });
+      const reason = "Auction is not active";
+      await expect(tx).to.be.revertedWith(reason);
+    });
+    it("finishAuction should throw error if item doesn't exist", async () => {
+      const tx = marketplace.finishAuction(0);
+      const reason = "Auction was stopped";
+      await expect(tx).to.be.revertedWith(reason);
+    });
+    it("cancelAuction should throw error if item doesn't exist", async () => {
+      const tx = marketplace.cancelAuction(0);
+      const reason = "Auction was stopped";
+      await expect(tx).to.be.revertedWith(reason);
     });
   });
 });
