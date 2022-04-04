@@ -26,7 +26,7 @@ contract Marketplace is MyToken {
 
     event CreateItem(uint256 _tokenId);
     event ListItem(uint256 _tokenId, uint256 _price);
-    event BuyItem(address buyer, uint256 _tokenId, uint256 _price);
+    event BuyItem(uint256 _tokenId, address buyer, uint256 _price);
     event UnlistItem(uint256 _tokenId);
 
     event ListItemOnAuction(uint256 _tokenId, uint256 _startAt, uint256 _finishAt);
@@ -64,7 +64,7 @@ contract Marketplace is MyToken {
         item.sold = true;
         item.price = msg.value;
 
-        emit BuyItem(msg.sender, _tokenId, msg.value);
+        emit BuyItem(_tokenId, msg.sender, msg.value);
     }
 
     function cancel(uint256 _tokenId) external onlyOwner {
