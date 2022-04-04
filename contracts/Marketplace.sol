@@ -8,7 +8,7 @@ contract Marketplace is MyToken {
     uint256 constant public DURATION = 3 days;
 
     struct Auction {
-        uint256 startedAt;
+        uint256 startAt;
         uint256 finishAt;
         bool active;
         mapping(address => uint256) bids;
@@ -24,12 +24,19 @@ contract Marketplace is MyToken {
     mapping(uint256 => Auction) auctions;
     mapping(uint256 => Item) items;
 
+    event CreateItem(uint256 _tokenId);
     event ListItem(uint256 _tokenId, uint256 _price);
     event BuyItem(address buyer, uint256 _tokenId, uint256 _price);
     event UnlistItem(uint256 _tokenId);
 
+    event ListItemOnAuction(uint256 _tokenId, uint256 _startAt, uint256 _finishAt);
+    event MakeBid(uint256 _tokenId, address _bidder, uint256 _amount);
+    event FinishAuction(uint256 _tokenId, address _winner, uint256 _amount);
+    event CancelAuction(uint256 _tokenId);
+
     function createItem() public onlyOwner {
-        mint(address(this));
+        uint256 tokenId = mint(address(this));
+        emit CreateItem(tokenId);
     }
 
     function listItem(uint256 _tokenId, uint256 _price) public onlyOwner {
@@ -62,7 +69,6 @@ contract Marketplace is MyToken {
 
     function cancel(uint256 _tokenId) external onlyOwner {
         Item storage item = items[_tokenId];
-
         require(item.selling, 'Item is not selling');
 
         item.selling = false;
@@ -75,14 +81,16 @@ contract Marketplace is MyToken {
         Auction storage auction = auctions[_tokenId];
         require(auction.active == false, 'Auction is active');
 
+        uint256 finishAt = block.timestamp + DURATION;
         auction.active = true;
-        auction.startedAt = block.timestamp;
-        auction.finishAt = block.timestamp + DURATION;
+        auction.startAt = block.timestamp;
+        auction.finishAt = finishAt;
+
+        emit ListItemOnAuction(_tokenId, block.timestamp, finishAt);
     }
 
     function makeBid(uint256 _tokenId) external payable {
         require(msg.value > 0, 'Value should be positive');
-
         Auction storage auction = auctions[_tokenId];
         require(auction.active, 'Auction is not active');
 
@@ -91,6 +99,7 @@ contract Marketplace is MyToken {
         }
 
         auction.bids[msg.sender] += msg.value;
+        emit MakeBid(_tokenId, msg.sender, msg.value);
     }
 
     function finishAuction(uint256 _tokenId) external onlyOwner {
@@ -98,9 +107,10 @@ contract Marketplace is MyToken {
         require(auction.active, 'Auction was stopped');
         require(block.timestamp >= auction.finishAt, 'Auction is still active');
 
-        auction.active = false;
+        delete auction.active;
 
         if (auction.bidders.length == 0) {
+            emit FinishAuction(_tokenId, address(this), 0);
             return;
         }
 
@@ -124,6 +134,7 @@ contract Marketplace is MyToken {
         address payable _to = payable(msg.sender);
         _to.transfer(_winnerRate);
         _transfer(address(this), _winner, _tokenId);
+        emit FinishAuction(_tokenId, _winner, _winnerRate);
     }
 
     function cancelAuction(uint256 _tokenId) external onlyOwner {
@@ -131,16 +142,13 @@ contract Marketplace is MyToken {
         require(auction.active, 'Auction was stopped');
         require(block.timestamp >= auction.finishAt, 'Auction is still active');
 
-        auction.active = false;
-
-        if (auction.bidders.length == 0) {
-            return;
-        }
-
         for (uint i = 0; i < auction.bidders.length; i++) {
             address payable bidder = payable(auction.bidders[i]);
             bidder.transfer(auction.bids[bidder]);
         }
+
+        delete auction.active;
+        emit CancelAuction(_tokenId);
     }
 
 }
