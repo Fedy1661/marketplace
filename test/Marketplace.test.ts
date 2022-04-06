@@ -238,6 +238,20 @@ describe("Marketplace Contract", function () {
         const reason = "Bid should be greater";
         await expect(tx).to.be.revertedWith(reason);
       });
+      it("should throw error if make bid after finish time auction", async () => {
+        await marketplace.createItem(tokenURI, owner.address);
+        await marketplace.listItemOnAuction(0, 10);
+
+        await ERC20.mint(addr1.address, 20);
+        await ERC20.connect(addr1).approve(marketplace.address, 20);
+
+        await network.provider.send("evm_increaseTime", [DURATION]);
+        await network.provider.send("evm_mine");
+
+        const tx = marketplace.connect(addr1).makeBid(0, 20);
+        const reason = "Auction is over";
+        await expect(tx).to.be.revertedWith(reason);
+      });
       it("should return lower bid", async () => {
         await ERC20.transfer(addr1.address, 50);
 

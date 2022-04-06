@@ -107,6 +107,7 @@ contract Marketplace is MyToken {
     function makeBid(uint256 _tokenId, uint256 _price) external {
         Auction storage auction = auctions[_tokenId];
         require(auction.active, 'Auction is not active');
+        require(auction.finishAt > block.timestamp, 'Auction is over');
         require(_price > auction.winnerRate, 'Bid should be greater');
 
         token.safeTransferFrom(msg.sender, address(this), _price);
