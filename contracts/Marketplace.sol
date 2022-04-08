@@ -30,14 +30,14 @@ contract Marketplace is MyToken {
     mapping(uint256 => Auction) private _auctions;
     mapping(uint256 => Item) private _items;
 
-    event CreateItem(uint256 _tokenId);
-    event ListItem(uint256 _tokenId, address _owner, uint256 _price);
-    event BuyItem(uint256 _tokenId, address _buyer, uint256 _price);
-    event UnlistItem(uint256 _tokenId);
+    event CreateItem(uint256 indexed _tokenId);
+    event ListItem(uint256 indexed _tokenId, address indexed _owner, uint256 _price);
+    event BuyItem(uint256 indexed _tokenId, address indexed _buyer, uint256 _price);
+    event UnlistItem(uint256 indexed _tokenId);
 
-    event ListItemOnAuction(uint256 _tokenId, uint256 _minPrice, uint256 _startAt, uint256 _finishAt);
-    event MakeBid(uint256 _tokenId, address _bidder, uint256 _amount);
-    event FinishAuction(uint256 _tokenId, address _winner, uint256 _amount, bool _success);
+    event ListItemOnAuction(uint256 indexed _tokenId, uint256 _minPrice, uint256 _startAt, uint256 _finishAt);
+    event MakeBid(uint256 indexed _tokenId, address _bidder, uint256 _amount);
+    event FinishAuction(uint256 indexed _tokenId, address _winner, uint256 _amount, bool _success);
 
     constructor(address _token) {
         token = IERC20(_token);
