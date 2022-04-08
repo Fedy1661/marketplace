@@ -49,9 +49,9 @@ contract Marketplace is MyToken {
     }
 
     function listItem(uint256 _tokenId, uint256 _price) public {
-        require(ownerOf(_tokenId) == msg.sender, 'You are not an owner NFT');
+        require(ownerOf(_tokenId) == msg.sender, "You are not an owner NFT");
         Item storage item = _items[_tokenId];
-        require(_price > 0, 'Price should be positive');
+        require(_price > 0, "Price should be positive");
 
         _transfer(msg.sender, address(this), _tokenId);
 
@@ -64,8 +64,8 @@ contract Marketplace is MyToken {
 
     function buyItem(uint256 _tokenId) public {
         Item storage item = _items[_tokenId];
-        require(item.selling, 'Item is not selling');
-        require(token.balanceOf(msg.sender) >= item.price, 'Not enough tokens');
+        require(item.selling, "Item is not selling");
+        require(token.balanceOf(msg.sender) >= item.price, "Not enough tokens");
 
         token.safeTransferFrom(msg.sender, item.owner, item.price);
         _transfer(address(this), msg.sender, _tokenId);
@@ -77,8 +77,8 @@ contract Marketplace is MyToken {
 
     function cancel(uint256 _tokenId) public {
         Item storage item = _items[_tokenId];
-        require(item.selling, 'Item is not selling');
-        require(item.owner == msg.sender, 'You are not an owner NFT');
+        require(item.selling, "Item is not selling");
+        require(item.owner == msg.sender, "You are not an owner NFT");
 
         delete item.selling;
         _transfer(address(this), msg.sender, _tokenId);
@@ -87,8 +87,8 @@ contract Marketplace is MyToken {
     }
 
     function listItemOnAuction(uint256 _tokenId, uint256 _minPrice) public {
-        require(ownerOf(_tokenId) == msg.sender, 'You are not an owner NFT');
-        require(_minPrice > 0, 'Minimal price should be positive');
+        require(ownerOf(_tokenId) == msg.sender, "You are not an owner NFT");
+        require(_minPrice > 0, "Minimal price should be positive");
 
         Auction storage auction = _auctions[_tokenId];
         uint256 finishAt = block.timestamp + auctionDuration;
@@ -104,9 +104,9 @@ contract Marketplace is MyToken {
 
     function makeBid(uint256 _tokenId, uint256 _price) public {
         Auction storage auction = _auctions[_tokenId];
-        require(auction.active, 'Auction is not active');
-        require(auction.finishAt > block.timestamp, 'Auction is over');
-        require(_price > auction.winnerRate, 'Bid should be greater');
+        require(auction.active, "Auction is not active");
+        require(auction.finishAt > block.timestamp, "Auction is over");
+        require(_price > auction.winnerRate, "Bid should be greater");
 
         token.safeTransferFrom(msg.sender, address(this), _price);
 
@@ -123,8 +123,8 @@ contract Marketplace is MyToken {
 
     function finishAuction(uint256 _tokenId) public {
         Auction storage auction = _auctions[_tokenId];
-        require(auction.active, 'Auction is not active');
-        require(block.timestamp >= auction.finishAt, 'Auction is still active');
+        require(auction.active, "Auction is not active");
+        require(block.timestamp >= auction.finishAt, "Auction is still active");
 
         delete auction.active;
 
