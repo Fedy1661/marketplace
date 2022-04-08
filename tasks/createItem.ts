@@ -7,8 +7,10 @@ task("createItem", "Create an item")
   .addParam("owner", "Owner address")
   .setAction(async (taskArgs, hre) => {
     const { marketplace, uri, owner } = taskArgs;
-    const Contract = await hre.ethers.getContractFactory("Marketplace");
-    const contract: Marketplace = await Contract.attach(marketplace);
+    const contract: Marketplace = await hre.ethers.getContractAt(
+      "Marketplace",
+      marketplace
+    );
 
     const tx = await contract.createItem(uri, owner);
     await tx.wait();

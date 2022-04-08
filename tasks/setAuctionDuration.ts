@@ -6,8 +6,10 @@ task("setAuctionDuration", "Set auction duration")
   .addParam("duration", "Auction duration(seconds)")
   .setAction(async (taskArgs, hre) => {
     const { marketplace, duration } = taskArgs;
-    const Contract = await hre.ethers.getContractFactory("Marketplace");
-    const contract: Marketplace = await Contract.attach(marketplace);
+    const contract: Marketplace = await hre.ethers.getContractAt(
+      "Marketplace",
+      marketplace
+    );
 
     const tx = await contract.setAuctionDuration(duration);
     await tx.wait();

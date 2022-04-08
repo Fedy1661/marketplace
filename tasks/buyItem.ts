@@ -6,8 +6,10 @@ task("buyItem", "Buy an item")
   .addParam("id", "Token ID")
   .setAction(async (taskArgs, hre) => {
     const { marketplace, id } = taskArgs;
-    const Contract = await hre.ethers.getContractFactory("Marketplace");
-    const contract: Marketplace = await Contract.attach(marketplace);
+    const contract: Marketplace = await hre.ethers.getContractAt(
+      "Marketplace",
+      marketplace
+    );
 
     const tx = await contract.buyItem(id);
     await tx.wait();

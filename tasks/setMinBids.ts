@@ -6,8 +6,10 @@ task("setMinBids", "Set minimal bids")
   .addParam("bids", "Bids")
   .setAction(async (taskArgs, hre) => {
     const { marketplace, bids } = taskArgs;
-    const Contract = await hre.ethers.getContractFactory("Marketplace");
-    const contract: Marketplace = await Contract.attach(marketplace);
+    const contract: Marketplace = await hre.ethers.getContractAt(
+      "Marketplace",
+      marketplace
+    );
 
     const tx = await contract.setMinBids(bids);
     await tx.wait();
