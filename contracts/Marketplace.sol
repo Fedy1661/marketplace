@@ -27,8 +27,8 @@ contract Marketplace is MyToken {
         bool selling;
     }
 
-    mapping(uint256 => Auction) auctions;
-    mapping(uint256 => Item) items;
+    mapping(uint256 => Auction) private _auctions;
+    mapping(uint256 => Item) private _items;
 
     event CreateItem(uint256 _tokenId);
     event ListItem(uint256 _tokenId, address _owner, uint256 _price);
@@ -37,7 +37,7 @@ contract Marketplace is MyToken {
 
     event ListItemOnAuction(uint256 _tokenId, uint256 _minPrice, uint256 _startAt, uint256 _finishAt);
     event MakeBid(uint256 _tokenId, address _bidder, uint256 _amount);
-    event FinishAuction(uint256 _tokenId, address _winner, uint256 _amount, bool success);
+    event FinishAuction(uint256 _tokenId, address _winner, uint256 _amount, bool _success);
 
     constructor(address _token) {
         token = IERC20(_token);
@@ -50,7 +50,7 @@ contract Marketplace is MyToken {
 
     function listItem(uint256 _tokenId, uint256 _price) public {
         require(ownerOf(_tokenId) == msg.sender, 'You are not an owner NFT');
-        Item storage item = items[_tokenId];
+        Item storage item = _items[_tokenId];
         require(_price > 0, 'Price should be positive');
 
         _transfer(msg.sender, address(this), _tokenId);
@@ -63,7 +63,7 @@ contract Marketplace is MyToken {
     }
 
     function buyItem(uint256 _tokenId) public {
-        Item storage item = items[_tokenId];
+        Item storage item = _items[_tokenId];
         require(item.selling, 'Item is not selling');
         require(token.balanceOf(msg.sender) >= item.price, 'Not enough tokens');
 
@@ -76,7 +76,7 @@ contract Marketplace is MyToken {
     }
 
     function cancel(uint256 _tokenId) public {
-        Item storage item = items[_tokenId];
+        Item storage item = _items[_tokenId];
         require(item.selling, 'Item is not selling');
         require(item.owner == msg.sender, 'You are not an owner NFT');
 
@@ -90,7 +90,7 @@ contract Marketplace is MyToken {
         require(ownerOf(_tokenId) == msg.sender, 'You are not an owner NFT');
         require(_minPrice > 0, 'Minimal price should be positive');
 
-        Auction storage auction = auctions[_tokenId];
+        Auction storage auction = _auctions[_tokenId];
         uint256 finishAt = block.timestamp + auctionDuration;
         auction.active = true;
         auction.finishAt = finishAt;
@@ -102,8 +102,8 @@ contract Marketplace is MyToken {
         emit ListItemOnAuction(_tokenId, _minPrice, block.timestamp, finishAt);
     }
 
-    function makeBid(uint256 _tokenId, uint256 _price) external {
-        Auction storage auction = auctions[_tokenId];
+    function makeBid(uint256 _tokenId, uint256 _price) public {
+        Auction storage auction = _auctions[_tokenId];
         require(auction.active, 'Auction is not active');
         require(auction.finishAt > block.timestamp, 'Auction is over');
         require(_price > auction.winnerRate, 'Bid should be greater');
@@ -121,8 +121,8 @@ contract Marketplace is MyToken {
         emit MakeBid(_tokenId, msg.sender, _price);
     }
 
-    function finishAuction(uint256 _tokenId) external {
-        Auction storage auction = auctions[_tokenId];
+    function finishAuction(uint256 _tokenId) public {
+        Auction storage auction = _auctions[_tokenId];
         require(auction.active, 'Auction is not active');
         require(block.timestamp >= auction.finishAt, 'Auction is still active');
 
