@@ -16,7 +16,6 @@ contract Marketplace is MyToken {
         address seller;
         address winner;
         uint256 winnerRate;
-        uint256 startAt;
         uint256 finishAt;
         uint256 amountBids;
         bool active;
@@ -94,7 +93,6 @@ contract Marketplace is MyToken {
         Auction storage auction = auctions[_tokenId];
         uint256 finishAt = block.timestamp + auctionDuration;
         auction.active = true;
-        auction.startAt = block.timestamp;
         auction.finishAt = finishAt;
         auction.winnerRate = _minPrice;
         auction.seller = msg.sender;
