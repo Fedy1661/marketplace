@@ -28,7 +28,7 @@ contract Marketplace is MyToken {
     mapping(uint256 => Auction) private _auctions;
     mapping(uint256 => Item) private _items;
 
-    event CreateItem(uint256 indexed _tokenId);
+    event CreateItem(uint256 indexed _tokenId, address indexed _creator, address indexed _owner);
     event ListItem(uint256 indexed _tokenId, address indexed _owner, uint256 _price);
     event BuyItem(uint256 indexed _tokenId, address indexed _buyer, uint256 _price);
     event UnlistItem(uint256 indexed _tokenId);
@@ -43,7 +43,7 @@ contract Marketplace is MyToken {
 
     function createItem(string memory _tokenURI, address _owner) public {
         uint256 tokenId = mint(_owner, _tokenURI);
-        emit CreateItem(tokenId);
+        emit CreateItem(tokenId, msg.sender, _owner);
     }
 
     function listItem(uint256 _tokenId, uint256 _price) public {
@@ -137,7 +137,7 @@ contract Marketplace is MyToken {
 
         token.transfer(tokenRecipient, auction.winnerRate);
         _transfer(address(this), nftRecipient, _tokenId);
-        
+
         delete auction.seller;
 
         emit FinishAuction(_tokenId, auction.winner, auction.winnerRate, success);

@@ -35,6 +35,12 @@ describe("Marketplace Contract", function () {
     it("should createItem", async () => {
       await marketplace.connect(addr1).createItem(tokenURI, addr1.address);
     });
+    it("should emit CreateItem event", async () => {
+      const tx = marketplace.createItem(tokenURI, addr1.address);
+      await expect(tx)
+        .to.be.emit(marketplace, "CreateItem")
+        .withArgs(0, owner.address, addr1.address);
+    });
   });
   describe("listItem", () => {
     it("should throw error if somebody else's token", async () => {
