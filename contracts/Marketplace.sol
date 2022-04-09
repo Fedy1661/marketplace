@@ -75,11 +75,11 @@ contract Marketplace is MyToken {
 
     function cancel(uint256 _tokenId) public {
         Item storage item = _items[_tokenId];
-        require(item.owner != address(0), "Item is not selling");
         require(item.owner == msg.sender, "You are not an owner NFT");
 
-        delete item.owner;
         _transfer(address(this), msg.sender, _tokenId);
+
+        delete item.owner;
 
         emit UnlistItem(_tokenId);
     }

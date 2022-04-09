@@ -162,11 +162,11 @@ describe("Marketplace Contract", function () {
       const reason = "You are not an owner NFT";
       await expect(tx).to.be.revertedWith(reason);
     });
-    it("should throw error when canceling non listed item", async () => {
+    it("should throw error when canceling non-listed item", async () => {
       await marketplace.createItem(tokenURI, owner.address);
 
       const tx = marketplace.cancel(0);
-      const reason = "Item is not selling";
+      const reason = "You are not an owner NFT";
       await expect(tx).to.be.revertedWith(reason);
     });
     it("should return nft", async () => {
