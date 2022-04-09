@@ -24,7 +24,6 @@ contract Marketplace is MyToken {
     struct Item {
         address owner;
         uint256 price;
-        bool selling;
     }
 
     mapping(uint256 => Auction) private _auctions;
@@ -56,7 +55,6 @@ contract Marketplace is MyToken {
         _transfer(msg.sender, address(this), _tokenId);
 
         item.price = _price;
-        item.selling = true;
         item.owner = msg.sender;
 
         emit ListItem(_tokenId, msg.sender, _price);
@@ -64,23 +62,23 @@ contract Marketplace is MyToken {
 
     function buyItem(uint256 _tokenId) public {
         Item storage item = _items[_tokenId];
-        require(item.selling, "Item is not selling");
+        require(item.owner != address(0), "Item is not selling");
         require(token.balanceOf(msg.sender) >= item.price, "Not enough tokens");
 
         token.safeTransferFrom(msg.sender, item.owner, item.price);
         _transfer(address(this), msg.sender, _tokenId);
 
-        delete item.selling;
+        delete item.owner;
 
         emit BuyItem(_tokenId, msg.sender, item.price);
     }
 
     function cancel(uint256 _tokenId) public {
         Item storage item = _items[_tokenId];
-        require(item.selling, "Item is not selling");
+        require(item.owner != address(0), "Item is not selling");
         require(item.owner == msg.sender, "You are not an owner NFT");
 
-        delete item.selling;
+        delete item.owner;
         _transfer(address(this), msg.sender, _tokenId);
 
         emit UnlistItem(_tokenId);
