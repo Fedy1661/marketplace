@@ -18,7 +18,6 @@ contract Marketplace is MyToken {
         uint256 winnerRate;
         uint256 finishAt;
         uint256 amountBids;
-        bool active;
     }
 
     struct Item {
@@ -90,7 +89,6 @@ contract Marketplace is MyToken {
 
         Auction storage auction = _auctions[_tokenId];
         uint256 finishAt = block.timestamp + auctionDuration;
-        auction.active = true;
         auction.finishAt = finishAt;
         auction.winnerRate = _minPrice;
         auction.seller = msg.sender;
@@ -102,7 +100,7 @@ contract Marketplace is MyToken {
 
     function makeBid(uint256 _tokenId, uint256 _price) public {
         Auction storage auction = _auctions[_tokenId];
-        require(auction.active, "Auction is not active");
+        require(auction.seller != address(0), "Auction is not active");
         require(auction.finishAt > block.timestamp, "Auction is over");
         require(_price > auction.winnerRate, "Bid should be greater");
 
@@ -121,10 +119,8 @@ contract Marketplace is MyToken {
 
     function finishAuction(uint256 _tokenId) public {
         Auction storage auction = _auctions[_tokenId];
-        require(auction.active, "Auction is not active");
+        require(auction.seller != address(0), "Auction is not active");
         require(block.timestamp >= auction.finishAt, "Auction is still active");
-
-        delete auction.active;
 
         address tokenRecipient;
         address nftRecipient;
@@ -141,6 +137,9 @@ contract Marketplace is MyToken {
 
         token.transfer(tokenRecipient, auction.winnerRate);
         _transfer(address(this), nftRecipient, _tokenId);
+        
+        delete auction.seller;
+
         emit FinishAuction(_tokenId, auction.winner, auction.winnerRate, success);
     }
 
