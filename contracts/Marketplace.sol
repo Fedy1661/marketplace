@@ -20,13 +20,13 @@ contract Marketplace is MyToken {
         uint256 amountBids;
     }
 
-    struct Item {
-        address owner;
+    struct Listing {
+        address maker;
         uint256 price;
     }
 
     mapping(uint256 => Auction) private _auctions;
-    mapping(uint256 => Item) private _items;
+    mapping(uint256 => Listing) private _listings;
 
     event CreateItem(uint256 indexed _tokenId, address indexed _creator, address indexed _owner);
     event ListItem(uint256 indexed _tokenId, address indexed _owner, uint256 _price);
@@ -48,37 +48,37 @@ contract Marketplace is MyToken {
 
     function listItem(uint256 _tokenId, uint256 _price) public {
         require(ownerOf(_tokenId) == msg.sender, "You are not an owner NFT");
-        Item storage item = _items[_tokenId];
+        Listing storage listing = _listings[_tokenId];
         require(_price > 0, "Price should be positive");
 
         _transfer(msg.sender, address(this), _tokenId);
 
-        item.price = _price;
-        item.owner = msg.sender;
+        listing.price = _price;
+        listing.maker = msg.sender;
 
         emit ListItem(_tokenId, msg.sender, _price);
     }
 
     function buyItem(uint256 _tokenId) public {
-        Item storage item = _items[_tokenId];
-        require(item.owner != address(0), "Item is not selling");
-        require(token.balanceOf(msg.sender) >= item.price, "Not enough tokens");
+        Listing storage listing = _listings[_tokenId];
+        require(listing.maker != address(0), "Item is not selling");
+        require(token.balanceOf(msg.sender) >= listing.price, "Not enough tokens");
 
-        token.safeTransferFrom(msg.sender, item.owner, item.price);
+        token.safeTransferFrom(msg.sender, listing.maker, listing.price);
         _transfer(address(this), msg.sender, _tokenId);
 
-        delete item.owner;
+        delete listing.maker;
 
-        emit BuyItem(_tokenId, msg.sender, item.price);
+        emit BuyItem(_tokenId, msg.sender, listing.price);
     }
 
     function cancel(uint256 _tokenId) public {
-        Item storage item = _items[_tokenId];
-        require(item.owner == msg.sender, "You are not an owner NFT");
+        Listing storage listing = _listings[_tokenId];
+        require(listing.maker == msg.sender, "You are not an owner NFT");
 
         _transfer(address(this), msg.sender, _tokenId);
 
-        delete item.owner;
+        delete listing.maker;
 
         emit UnlistItem(_tokenId);
     }
