@@ -107,7 +107,7 @@ contract Marketplace is MyToken {
         token.safeTransferFrom(msg.sender, address(this), _price);
 
         if (auction.winner != address(0)) {
-            token.transfer(auction.winner, auction.winnerRate);
+            token.safeTransfer(auction.winner, auction.winnerRate);
         }
 
         auction.winner = msg.sender;
