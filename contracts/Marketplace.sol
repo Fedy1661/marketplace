@@ -41,7 +41,7 @@ contract Marketplace is MyToken {
         token = IERC20(_token);
     }
 
-    function createItem(string memory _tokenURI, address _owner) public {
+    function createItem(string calldata _tokenURI, address _owner) public {
         uint256 tokenId = mint(_owner, _tokenURI);
         emit CreateItem(tokenId, msg.sender, _owner);
     }
